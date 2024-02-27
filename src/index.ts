@@ -1,6 +1,6 @@
 import dayjs, { Dayjs } from "dayjs";
 import axios, { AxiosError } from "axios";
-import { writeFile } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import pg from "pg";
 
 require("dotenv").config();
@@ -73,9 +73,9 @@ async function getGraylogLogs(posts: { id: string; range: TimeRange }[]) {
   return data;
 }
 
-const query = `
+const query = (organisation: string) => `
 select id, posteddate from publication 
-	where orgid='104576'
+	where orgid='${organisation}'
 	and createddate::date >= '2024-02-01'::date
 	and posteddate is not null
 	order by createddate desc
@@ -100,23 +100,33 @@ async function queryDataFromMasterDb<T extends pg.QueryResultRow>(
   return client.query<T>(query);
 }
 
+const organisations = {
+  lexus: "104576",
+  stabilo: "39400",
+} as const;
+
 async function main() {
-  const response = await queryDataFromMasterDb<{
-    id: string;
-    posteddate: Date;
-  }>(query);
+  for (const orgName in organisations) {
+    console.log("Scanning", orgName);
+    const orgId = organisations[orgName as keyof typeof organisations];
 
-  const logs = await getGraylogLogs(
-    response.rows.map((row) => ({
-      id: row.id,
-      range: {
-        from: dayjs(row.posteddate).subtract(12, "hours"),
-        to: dayjs(row.posteddate).add(12, "hours"),
-      },
-    }))
-  );
+    const response = await queryDataFromMasterDb<{
+      id: string;
+      posteddate: Date;
+    }>(query(orgId));
 
-  await writeFile("scan.lexus2.json", JSON.stringify(logs));
+    const logs = await getGraylogLogs(
+      response.rows.map((row) => ({
+        id: row.id,
+        range: {
+          from: dayjs(row.posteddate).subtract(12, "hours"),
+          to: dayjs(row.posteddate).add(12, "hours"),
+        },
+      }))
+    );
+
+    await writeFile(`scan/${orgName}.json`, JSON.stringify(logs));
+  }
 }
 
 main();
