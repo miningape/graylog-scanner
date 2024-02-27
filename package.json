@@ -1,0 +1,18 @@
+{
+  "dependencies": {
+    "@types/axios": "^0.14.0",
+    "@types/dotenv": "^8.2.0",
+    "@types/pg": "^8.11.2",
+    "axios": "^1.6.7",
+    "dayjs": "^1.11.10",
+    "dotenv": "^16.4.5",
+    "pg": "^8.11.3",
+    "typescript": "^5.3.3"
+  },
+  "scripts": {
+    "dev": "pnpm tsc && node dump/ && rm -rf dump"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.20"
+  }
+}
