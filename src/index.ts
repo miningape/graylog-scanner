@@ -5,6 +5,17 @@ import pg from "pg";
 
 require("dotenv").config();
 
+const client = new pg.Client({
+  user: process.env.MASTERDB_USER,
+  password: process.env.MASTERDB_PASSWORD,
+  database: process.env.MASTERDB_DATABASE,
+  port: Number.parseInt(process.env.MASTERDB_PORT!),
+  host: process.env.MASTERDB_HOST,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+});
+
 interface TimeRange {
   from: Dayjs;
   to: Dayjs;
@@ -76,7 +87,7 @@ async function getGraylogLogs(posts: { id: string; range: TimeRange }[]) {
 const query = (organisation: string) => `
 select id, posteddate from publication 
 	where orgid='${organisation}'
-	and createddate::date >= '2024-02-01'::date
+	and createddate::date >= '2023-12-01'::date
 	and posteddate is not null
 	order by createddate desc
 `;
@@ -84,20 +95,13 @@ select id, posteddate from publication
 async function queryDataFromMasterDb<T extends pg.QueryResultRow>(
   query: string
 ) {
-  const client = new pg.Client({
-    user: process.env.MASTERDB_USER,
-    password: process.env.MASTERDB_PASSWORD,
-    database: process.env.MASTERDB_DATABASE,
-    port: Number.parseInt(process.env.MASTERDB_PORT!),
-    host: process.env.MASTERDB_HOST,
-    ssl: {
-      rejectUnauthorized: false,
-    },
-  });
-
   await client.connect();
 
-  return client.query<T>(query);
+  const result = await client.query<T>(query);
+
+  await client.end();
+
+  return result;
 }
 
 const organisations = {
