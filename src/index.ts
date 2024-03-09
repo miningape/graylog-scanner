@@ -5,17 +5,6 @@ import pg from "pg";
 
 require("dotenv").config();
 
-const client = new pg.Client({
-  user: process.env.MASTERDB_USER,
-  password: process.env.MASTERDB_PASSWORD,
-  database: process.env.MASTERDB_DATABASE,
-  port: Number.parseInt(process.env.MASTERDB_PORT!),
-  host: process.env.MASTERDB_HOST,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
-
 interface TimeRange {
   from: Dayjs;
   to: Dayjs;
@@ -95,6 +84,17 @@ select id, posteddate from publication
 async function queryDataFromMasterDb<T extends pg.QueryResultRow>(
   query: string
 ) {
+  const client = new pg.Client({
+    user: process.env.MASTERDB_USER,
+    password: process.env.MASTERDB_PASSWORD,
+    database: process.env.MASTERDB_DATABASE,
+    port: Number.parseInt(process.env.MASTERDB_PORT!),
+    host: process.env.MASTERDB_HOST,
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  });
+
   await client.connect();
 
   const result = await client.query<T>(query);
@@ -105,8 +105,9 @@ async function queryDataFromMasterDb<T extends pg.QueryResultRow>(
 }
 
 const organisations = {
-  lexus: "104576",
-  stabilo: "39400",
+  // lexus: "104576",
+  // stabilo: "39400",
+  toyota: "101428",
 } as const;
 
 async function main() {
